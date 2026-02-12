@@ -4,55 +4,19 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// Load configuration
-const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
-
-applyEnvOverrides();
-
-function applyEnvOverrides() {
-  config.meta = config.meta || {};
-  config.meta.instagram = config.meta.instagram || {};
-  config.meta.messenger = config.meta.messenger || {};
-
-  config.meta.appSecret = process.env.META_APP_SECRET || config.meta.appSecret;
-  config.meta.verifyToken =
-    process.env.META_VERIFY_TOKEN || config.meta.verifyToken;
-
-  config.meta.instagram.appSecret =
-    process.env.META_INSTAGRAM_APP_SECRET || config.meta.instagram.appSecret;
-  config.meta.instagram.verifyToken =
-    process.env.META_INSTAGRAM_VERIFY_TOKEN ||
-    config.meta.instagram.verifyToken;
-  config.meta.instagram.pageAccessToken =
-    process.env.META_INSTAGRAM_PAGE_ACCESS_TOKEN ||
-    config.meta.instagram.pageAccessToken;
-
-  config.meta.messenger.appSecret =
-    process.env.META_MESSENGER_APP_SECRET || config.meta.messenger.appSecret;
-  config.meta.messenger.verifyToken =
-    process.env.META_MESSENGER_VERIFY_TOKEN ||
-    config.meta.messenger.verifyToken;
-  config.meta.messenger.pageAccessToken =
-    process.env.META_MESSENGER_PAGE_ACCESS_TOKEN ||
-    config.meta.messenger.pageAccessToken;
-}
+const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "";
+const PAGE_ACCESS_TOKEN = process.env.META_INSTAGRAM_PAGE_ACCESS_TOKEN || "";
+const OPENCLAW_HOOK_URL = process.env.OPENCLAW_HOOK_URL || "";
+const SKILL_SERVER = process.env.SKILL_SERVER || "http://localhost:8080";
 
 function getVerifyTokens() {
   const tokens = new Set();
 
-  if (config.meta?.verifyToken) {
-    tokens.add(config.meta.verifyToken);
-  }
-  if (config.meta?.instagram?.verifyToken) {
-    tokens.add(config.meta.instagram.verifyToken);
-  }
-  if (config.meta?.messenger?.verifyToken) {
-    tokens.add(config.meta.messenger.verifyToken);
-  }
+  tokens.add(VERIFY_TOKEN);
+  tokens.add(PAGE_ACCESS_TOKEN);
 
   return tokens;
 }
-
 function detectWebhookPlatform(payload: any) {
   const objectType = payload?.object;
 
@@ -191,7 +155,7 @@ async function handleInstagramMessage(event: any) {
     callbacks: {
       sendMessage: {
         url: `https://graph.facebook.com/v24.0/me/messages`,
-        token: config.meta.instagram.pageAccessToken,
+        token: PAGE_ACCESS_TOKEN,
         method: "POST",
         recipientId: event.sender.id,
       },
@@ -257,7 +221,7 @@ async function handleInstagramComment(commentData: any) {
     callbacks: {
       replyToComment: {
         url: `https://graph.facebook.com/v24.0/${commentData.id}/replies`,
-        token: config.meta.instagram.pageAccessToken,
+        token: PAGE_ACCESS_TOKEN,
         method: "POST",
       },
     },
@@ -296,7 +260,7 @@ async function handleMessengerMessage(event: any) {
     callbacks: {
       sendMessage: {
         url: `https://graph.facebook.com/v24.0/me/messages`,
-        token: config.meta.messenger.pageAccessToken,
+        token: PAGE_ACCESS_TOKEN,
         method: "POST",
         recipientId: event.sender.id,
       },
@@ -311,15 +275,15 @@ async function handleMessengerMessage(event: any) {
  */
 async function forwardToOpenClaw(senderId: string, userMessage: string) {
   try {
-    console.log("Forwarding to OpenClaw:", config.openclaw.hookUrl);
+    console.log("Forwarding to OpenClaw:", OPENCLAW_HOOK_URL);
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
     // Add API key if configured
-    if (config.openclaw.apiKey) {
-      headers["Authorization"] = `Bearer ${config.openclaw.apiKey}`;
+    if (process.env.OPENCLAW_API_KEY) {
+      headers["Authorization"] = `Bearer ${process.env.OPENCLAW_API_KEY}`;
     }
 
     // Send payload to Meta Instagram API webhook endpoint
@@ -335,7 +299,7 @@ You received the following user message from Instagram:
 
 
 When you have your response ready, send it to this URL via a POST request:
-${process.env.SKILL_SERVER || "http://localhost:8080"}/callbacks
+${SKILL_SERVER}/callbacks
 
 The POST request body should be a JSON object with the following structure:
 {
@@ -355,7 +319,7 @@ The POST request body should be a JSON object with the following structure:
       thinking: "low",
     };
 
-    const response = await fetch(config.openclaw.hookUrl, {
+    const response = await fetch(OPENCLAW_HOOK_URL, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
@@ -392,8 +356,8 @@ app.post("/callbacks", express.json(), async (req, res) => {
 });
 
 // Start server
-const PORT = config.server.port || 8080;
-const HOST = config.server.host || "0.0.0.0";
+const PORT = 8080;
+const HOST = "0.0.0.0";
 
 app.listen(PORT, HOST, () => {
   console.log(`Meta webhook server running on ${HOST}:${PORT}`);
@@ -406,5 +370,5 @@ app.listen(PORT, HOST, () => {
   console.log(
     `Messenger endpoint (legacy): http://${HOST}:${PORT}/webhook/messenger`,
   );
-  console.log(`OpenClaw hook URL: ${config.openclaw.hookUrl}`);
+  console.log(`OpenClaw hook URL: ${OPENCLAW_HOOK_URL}`);
 });
