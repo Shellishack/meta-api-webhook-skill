@@ -7,7 +7,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Configuration
@@ -17,13 +16,13 @@ const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
 const OPENCLAW_HOOK_URL = process.env.OPENCLAW_HOOK_URL || 'http://localhost:8080/hooks/agent';
 const OPENCLAW_API_KEY = process.env.OPENCLAW_API_KEY;
 
-// Verify webhook signature
-function verifySignature(req, res, buf) {
+// Verify webhook signature middleware
+function verifySignatureMiddleware(req, res, buf) {
   const signature = req.headers['x-hub-signature-256'];
   
   if (!signature) {
     console.log('No signature found in request');
-    return false;
+    throw new Error('No signature found');
   }
 
   const signatureHash = signature.split('sha256=')[1];
@@ -34,10 +33,8 @@ function verifySignature(req, res, buf) {
 
   if (signatureHash !== expectedHash) {
     console.log('Invalid signature');
-    return false;
+    throw new Error('Invalid signature');
   }
-
-  return true;
 }
 
 // Webhook verification endpoint (GET)
@@ -60,22 +57,29 @@ app.get('/webhook', (req, res) => {
 });
 
 // Webhook notification endpoint (POST)
-app.post('/webhook', express.json({ verify: verifySignature }), async (req, res) => {
+app.post('/webhook', express.json({ verify: verifySignatureMiddleware }), async (req, res) => {
   try {
     const body = req.body;
 
-    // Respond quickly to Meta
-    res.status(200).send('EVENT_RECEIVED');
-
     // Process the webhook event
     if (body.object === 'page' || body.object === 'instagram') {
+      // Respond quickly to Meta (required within 20 seconds)
+      res.status(200).send('EVENT_RECEIVED');
+      
+      // Process events asynchronously
       for (const entry of body.entry) {
-        await processWebhookEntry(entry, body.object);
+        processWebhookEntry(entry, body.object).catch(err => {
+          console.error('Error processing webhook entry:', err);
+        });
       }
+    } else {
+      res.status(200).send('EVENT_RECEIVED');
     }
   } catch (error) {
     console.error('Error processing webhook:', error);
-    res.status(500).send('Internal Server Error');
+    if (!res.headersSent) {
+      res.status(500).send('Internal Server Error');
+    }
   }
 });
 
