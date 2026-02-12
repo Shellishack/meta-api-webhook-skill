@@ -8,6 +8,7 @@ const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "";
 const PAGE_ACCESS_TOKEN = process.env.META_INSTAGRAM_PAGE_ACCESS_TOKEN || "";
 const OPENCLAW_HOOK_URL = process.env.OPENCLAW_HOOK_URL || "";
 const SKILL_SERVER = process.env.SKILL_SERVER || "http://localhost:8080";
+const OPENCLAW_TOKEN = process.env.OPENCLAW_TOKEN || "";
 
 function getVerifyTokens() {
   const tokens = new Set();
@@ -282,8 +283,8 @@ async function forwardToOpenClaw(senderId: string, userMessage: string) {
     };
 
     // Add API key if configured
-    if (process.env.OPENCLAW_API_KEY) {
-      headers["Authorization"] = `Bearer ${process.env.OPENCLAW_API_KEY}`;
+    if (OPENCLAW_TOKEN) {
+      headers["Authorization"] = `Bearer ${OPENCLAW_TOKEN}`;
     }
 
     // Send payload to Meta Instagram API webhook endpoint
