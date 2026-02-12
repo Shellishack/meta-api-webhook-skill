@@ -10,7 +10,7 @@ Complete webhook server for Instagram and Facebook Messenger that forwards event
    ```
 
 2. **Configure credentials:**
-   Edit `config.json` (or `config.yaml`) with your Meta app credentials and OpenClaw URL
+  Copy `.env.example` to `.env` and set your Meta tokens/secrets there. Keep `config.json` for non-secret settings like host/port and OpenClaw URL.
 
 3. **Start the server:**
    ```bash
@@ -30,13 +30,13 @@ Complete webhook server for Instagram and Facebook Messenger that forwards event
 ```json
 {
   "meta": {
-    "appSecret": "your_meta_app_secret",
-    "verifyToken": "your_custom_verify_token",
+    "appSecret": "",
+    "verifyToken": "",
     "instagram": {
-      "pageAccessToken": "your_instagram_page_access_token"
+      "pageAccessToken": ""
     },
     "messenger": {
-      "pageAccessToken": "your_messenger_page_access_token"
+      "pageAccessToken": ""
     }
   },
   "openclaw": {
@@ -64,10 +64,31 @@ const yaml = require('js-yaml');
 const config = yaml.load(fs.readFileSync('./config.yaml', 'utf8'));
 ```
 
+### Environment Variables (.env)
+
+Create `scripts/.env` from `.env.example`:
+
+```bash
+# macOS/Linux
+cp .env.example .env
+
+# Windows (PowerShell)
+Copy-Item .env.example .env
+```
+
+Required values:
+
+```env
+META_APP_SECRET=your_meta_app_secret
+META_VERIFY_TOKEN=your_custom_verify_token
+META_INSTAGRAM_PAGE_ACCESS_TOKEN=your_instagram_page_access_token
+META_MESSENGER_PAGE_ACCESS_TOKEN=your_messenger_page_access_token
+```
+
 **Where to find credentials:**
 
 - **appSecret**: Meta App Dashboard → Settings → Basic → App Secret
-- **verifyToken**: Create any random string (e.g., "my_secure_token_123")
+- **verifyToken**: Create any random string (e.g., "my_secure_token_123") and set it in `.env`
 - **pageAccessToken**: Meta App Dashboard → Product (Instagram/Messenger) → Settings → Generate Token
 
 ---

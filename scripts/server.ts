@@ -1,11 +1,41 @@
 import express from "express";
 import fs from "fs";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Load configuration
 const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
-const app = express();
-app.use(express.json());
+applyEnvOverrides();
+
+function applyEnvOverrides() {
+  config.meta = config.meta || {};
+  config.meta.instagram = config.meta.instagram || {};
+  config.meta.messenger = config.meta.messenger || {};
+
+  config.meta.appSecret = process.env.META_APP_SECRET || config.meta.appSecret;
+  config.meta.verifyToken =
+    process.env.META_VERIFY_TOKEN || config.meta.verifyToken;
+
+  config.meta.instagram.appSecret =
+    process.env.META_INSTAGRAM_APP_SECRET || config.meta.instagram.appSecret;
+  config.meta.instagram.verifyToken =
+    process.env.META_INSTAGRAM_VERIFY_TOKEN ||
+    config.meta.instagram.verifyToken;
+  config.meta.instagram.pageAccessToken =
+    process.env.META_INSTAGRAM_PAGE_ACCESS_TOKEN ||
+    config.meta.instagram.pageAccessToken;
+
+  config.meta.messenger.appSecret =
+    process.env.META_MESSENGER_APP_SECRET || config.meta.messenger.appSecret;
+  config.meta.messenger.verifyToken =
+    process.env.META_MESSENGER_VERIFY_TOKEN ||
+    config.meta.messenger.verifyToken;
+  config.meta.messenger.pageAccessToken =
+    process.env.META_MESSENGER_PAGE_ACCESS_TOKEN ||
+    config.meta.messenger.pageAccessToken;
+}
 
 function getVerifyTokens() {
   const tokens = new Set();
@@ -62,8 +92,6 @@ function handleWebhookVerification(
   }
 }
 
-app.get("/webhook/meta", handleWebhookVerification);
-
 /**
  * Webhook Event Handler (POST)
  * Receives Meta webhook events and forwards to OpenClaw
@@ -97,8 +125,6 @@ async function handleMetaWebhookEvent(
   }
 }
 
-app.post("/webhook/meta", handleMetaWebhookEvent);
-
 /**
  * Process a Meta webhook entry
  */
@@ -130,8 +156,6 @@ async function processMetaEntry(platform: string, entry: any) {
     for (const event of messaging) {
       if (event.message) {
         await handleMessengerMessage(event);
-      } else if (event.postback) {
-        await handleMessengerPostback(event);
       }
     }
   }
@@ -174,7 +198,7 @@ async function handleInstagramMessage(event: any) {
     },
   };
 
-  await forwardToOpenClaw(payload);
+  await forwardToOpenClaw(event.sender.id, event.message.text || "");
 }
 
 /**
@@ -239,7 +263,7 @@ async function handleInstagramComment(commentData: any) {
     },
   };
 
-  await forwardToOpenClaw(payload);
+  await forwardToOpenClaw(commentData.from.id, commentData.text || "");
 }
 
 /**
@@ -279,50 +303,13 @@ async function handleMessengerMessage(event: any) {
     },
   };
 
-  await forwardToOpenClaw(payload);
-}
-
-/**
- * Handle Messenger postback
- */
-async function handleMessengerPostback(event: any) {
-  const payload = {
-    source: "meta-webhook",
-    platform: "messenger",
-    event: {
-      type: "postback",
-      sender: {
-        id: event.sender.id,
-      },
-      postback: {
-        title: event.postback.title,
-        payload: event.postback.payload,
-      },
-      conversation: {
-        id: event.sender.id,
-      },
-    },
-    metadata: {
-      pageId: event.recipient.id,
-      receivedAt: new Date().toISOString(),
-    },
-    callbacks: {
-      sendMessage: {
-        url: `https://graph.facebook.com/v24.0/me/messages`,
-        token: config.meta.messenger.pageAccessToken,
-        method: "POST",
-        recipientId: event.sender.id,
-      },
-    },
-  };
-
-  await forwardToOpenClaw(payload);
+  await forwardToOpenClaw(event.sender.id, event.message.text || "");
 }
 
 /**
  * Forward processed event to OpenClaw
  */
-async function forwardToOpenClaw(payload: any) {
+async function forwardToOpenClaw(senderId: string, userMessage: string) {
   try {
     console.log("Forwarding to OpenClaw:", config.openclaw.hookUrl);
 
@@ -335,10 +322,43 @@ async function forwardToOpenClaw(payload: any) {
       headers["Authorization"] = `Bearer ${config.openclaw.apiKey}`;
     }
 
+    // Send payload to Meta Instagram API webhook endpoint
+    const instruction = `\
+You are a helpful assistant that processes user messages received from Instagram for a business account.
+You will help the user to navigate through their requests in a friendly and efficient manner.
+
+You received the following user message from Instagram:
+{
+  "senderId": "${senderId}", // Instagram User ID
+  "message": "${userMessage}" // The text message sent by the user
+}
+
+
+When you have your response ready, send it to this URL via a POST request:
+${process.env.SKILL_SERVER || "http://localhost:8080"}/callbacks
+
+The POST request body should be a JSON object with the following structure:
+{
+  "recipient": {
+    "id": "<INSTAGRAM_USER_ID>"
+  },
+  "message": {
+    "text": "<YOUR_RESPONSE_MESSAGE>"
+  }
+}
+`;
+
+    const body = {
+      message: instruction,
+      wakeMode: "now",
+      model: "anthropic/claude-haiku-4-5",
+      thinking: "low",
+    };
+
     const response = await fetch(config.openclaw.hookUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
 
     console.log("OpenClaw response:", response.status);
@@ -348,9 +368,27 @@ async function forwardToOpenClaw(payload: any) {
   }
 }
 
+const app = express();
+app.use(express.json());
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ status: "ok", service: "meta-webhook-server" });
+});
+
+app.get("/webhook/meta", handleWebhookVerification);
+app.post("/webhook/meta", handleMetaWebhookEvent);
+
+// Handle agent callbacks for sending messages
+app.post("/callbacks", express.json(), async (req, res) => {
+  const payload = req.body;
+
+  console.log("Received callback request:", JSON.stringify(payload, null, 2));
+
+  // Here you would implement sending messages back via Meta APIs
+  // using the provided callback information in the payload.
+
+  res.status(200).send("Callback received");
 });
 
 // Start server
