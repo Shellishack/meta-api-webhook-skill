@@ -1,0 +1,67 @@
+{
+  "skill": {
+    "name": "meta-api-webhook-skill",
+    "version": "1.0.0",
+    "description": "OpenClaw skill for handling Meta Graph API webhooks from Facebook and Instagram",
+    "type": "webhook",
+    "capabilities": [
+      "receive_webhooks",
+      "send_messages",
+      "manage_content",
+      "handle_comments",
+      "handle_reactions"
+    ],
+    "platform": "meta",
+    "platforms_supported": [
+      "facebook",
+      "instagram"
+    ]
+  },
+  "server": {
+    "type": "nodejs",
+    "entrypoint": "src/server.js",
+    "port": 3000,
+    "healthCheck": "/health"
+  },
+  "webhook": {
+    "verification_endpoint": "/webhook",
+    "notification_endpoint": "/webhook",
+    "supported_events": [
+      "messages",
+      "messaging_postbacks",
+      "message_deliveries",
+      "message_reads",
+      "message_echoes",
+      "messaging_referrals",
+      "feed_comment",
+      "photo_comment",
+      "video_comment",
+      "post_comment",
+      "album_comment",
+      "reactions"
+    ]
+  },
+  "openclaw_integration": {
+    "hook_url": "/hooks/agent",
+    "auth_required": true,
+    "payload_format": {
+      "skill": "meta-api-webhook-skill",
+      "event": "object containing webhook event data",
+      "metaApiConfig": "object containing Meta API configuration",
+      "callbacks": "object containing Meta API callback endpoints"
+    }
+  },
+  "environment_variables": {
+    "required": [
+      "META_APP_SECRET",
+      "META_VERIFY_TOKEN",
+      "META_ACCESS_TOKEN",
+      "OPENCLAW_HOOK_URL"
+    ],
+    "optional": [
+      "OPENCLAW_API_KEY",
+      "PORT",
+      "NODE_ENV"
+    ]
+  }
+}
