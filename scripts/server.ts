@@ -235,38 +235,38 @@ async function handleInstagramComment(commentData: any) {
  * Handle Messenger message
  */
 async function handleMessengerMessage(event: any) {
-  const payload = {
-    source: "meta-webhook",
-    platform: "messenger",
-    event: {
-      type: "message",
-      sender: {
-        id: event.sender.id,
-      },
-      message: {
-        id: event.message.mid,
-        text: event.message.text || "",
-        timestamp: event.timestamp,
-        attachments: event.message.attachments || [],
-        quick_reply: event.message.quick_reply || null,
-      },
-      conversation: {
-        id: event.sender.id,
-      },
-    },
-    metadata: {
-      pageId: event.recipient.id,
-      receivedAt: new Date().toISOString(),
-    },
-    callbacks: {
-      sendMessage: {
-        url: `https://graph.facebook.com/v24.0/me/messages`,
-        token: PAGE_ACCESS_TOKEN,
-        method: "POST",
-        recipientId: event.sender.id,
-      },
-    },
-  };
+  // const payload = {
+  //   source: "meta-webhook",
+  //   platform: "messenger",
+  //   event: {
+  //     type: "message",
+  //     sender: {
+  //       id: event.sender.id,
+  //     },
+  //     message: {
+  //       id: event.message.mid,
+  //       text: event.message.text || "",
+  //       timestamp: event.timestamp,
+  //       attachments: event.message.attachments || [],
+  //       quick_reply: event.message.quick_reply || null,
+  //     },
+  //     conversation: {
+  //       id: event.sender.id,
+  //     },
+  //   },
+  //   metadata: {
+  //     pageId: event.recipient.id,
+  //     receivedAt: new Date().toISOString(),
+  //   },
+  //   callbacks: {
+  //     sendMessage: {
+  //       url: `https://graph.facebook.com/v24.0/me/messages`,
+  //       token: PAGE_ACCESS_TOKEN,
+  //       method: "POST",
+  //       recipientId: event.sender.id,
+  //     },
+  //   },
+  // };
 
   await forwardToOpenClaw(event.sender.id, event.message.text || "");
 }
@@ -320,11 +320,17 @@ The POST request body should be a JSON object with the following structure:
       thinking: "low",
     };
 
-    const response = await fetch(OPENCLAW_HOOK_URL, {
+    const response = await fetch(`${OPENCLAW_HOOK_URL}/hooks/agent`, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
     });
+
+    if (!response.ok) {
+      throw new Error(
+        `OpenClaw responded with status ${response.status}. ${await response.text()}`,
+      );
+    }
 
     console.log("OpenClaw response:", response.status);
   } catch (error: any) {
