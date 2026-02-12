@@ -226,7 +226,7 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Meta API Webhook Skill server listening on port ${PORT}`);
   console.log(`Webhook URL: http://localhost:${PORT}/webhook`);
   console.log(`OpenClaw Hook URL: ${OPENCLAW_HOOK_URL}`);
