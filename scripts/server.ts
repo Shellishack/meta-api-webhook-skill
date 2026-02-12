@@ -1,19 +1,11 @@
-const express = require("express");
-const crypto = require("crypto");
-const axios = require("axios");
-const fs = require("fs");
+import express from "express";
+import fs from "fs";
 
 // Load configuration
 const config = JSON.parse(fs.readFileSync("./config.json", "utf8"));
 
 const app = express();
-app.use(
-  express.json({
-    verify: (req, res, buf) => {
-      req.rawBody = buf;
-    },
-  }),
-);
+app.use(express.json());
 
 function getVerifyTokens() {
   const tokens = new Set();
@@ -31,33 +23,7 @@ function getVerifyTokens() {
   return tokens;
 }
 
-function getCandidateSecrets(platform) {
-  const secrets = [];
-
-  if (config.meta?.appSecret) {
-    secrets.push(config.meta.appSecret);
-  }
-
-  if (platform === "instagram" && config.meta?.instagram?.appSecret) {
-    secrets.push(config.meta.instagram.appSecret);
-  }
-
-  if (platform === "messenger" && config.meta?.messenger?.appSecret) {
-    secrets.push(config.meta.messenger.appSecret);
-  }
-
-  if (platform !== "instagram" && config.meta?.instagram?.appSecret) {
-    secrets.push(config.meta.instagram.appSecret);
-  }
-
-  if (platform !== "messenger" && config.meta?.messenger?.appSecret) {
-    secrets.push(config.meta.messenger.appSecret);
-  }
-
-  return [...new Set(secrets.filter(Boolean))];
-}
-
-function detectWebhookPlatform(payload) {
+function detectWebhookPlatform(payload: any) {
   const objectType = payload?.object;
 
   if (objectType === "instagram") {
@@ -75,7 +41,10 @@ function detectWebhookPlatform(payload) {
  * Webhook Verification Endpoint (GET)
  * Meta sends this to verify your webhook URL
  */
-function handleWebhookVerification(req, res) {
+function handleWebhookVerification(
+  req: express.Request,
+  res: express.Response,
+) {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
@@ -94,14 +63,15 @@ function handleWebhookVerification(req, res) {
 }
 
 app.get("/webhook/meta", handleWebhookVerification);
-app.get("/webhook/instagram", handleWebhookVerification);
-app.get("/webhook/messenger", handleWebhookVerification);
 
 /**
  * Webhook Event Handler (POST)
  * Receives Meta webhook events and forwards to OpenClaw
  */
-async function handleMetaWebhookEvent(req, res) {
+async function handleMetaWebhookEvent(
+  req: express.Request,
+  res: express.Response,
+) {
   // Always respond 200 immediately to avoid Meta retries
   res.sendStatus(200);
 
@@ -109,23 +79,6 @@ async function handleMetaWebhookEvent(req, res) {
     const platform = detectWebhookPlatform(req.body);
     if (!platform) {
       console.log("Skipping unsupported webhook object:", req.body?.object);
-      return;
-    }
-
-    console.log(
-      `Webhook event received for ${platform}:`,
-      JSON.stringify(req.body, null, 2),
-    );
-
-    // Validate signature
-    const signature = req.headers["x-hub-signature-256"];
-    const candidateSecrets = getCandidateSecrets(platform);
-    const isValidSignature = candidateSecrets.some((secret) =>
-      validateSignature(req.rawBody, signature, secret),
-    );
-
-    if (!isValidSignature) {
-      console.error("Invalid webhook signature");
       return;
     }
 
@@ -145,35 +98,11 @@ async function handleMetaWebhookEvent(req, res) {
 }
 
 app.post("/webhook/meta", handleMetaWebhookEvent);
-app.post("/webhook/instagram", handleMetaWebhookEvent);
-app.post("/webhook/messenger", handleMetaWebhookEvent);
-
-/**
- * Validate webhook signature using HMAC-SHA256
- */
-function validateSignature(payload, signature, appSecret) {
-  if (!signature || !appSecret || !payload) {
-    return false;
-  }
-
-  const expectedSignature =
-    "sha256=" +
-    crypto.createHmac("sha256", appSecret).update(payload).digest("hex");
-
-  if (signature.length !== expectedSignature.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature),
-  );
-}
 
 /**
  * Process a Meta webhook entry
  */
-async function processMetaEntry(platform, entry) {
+async function processMetaEntry(platform: string, entry: any) {
   if (platform === "instagram") {
     const messaging = entry.messaging || [];
     const changes = entry.changes || [];
@@ -211,7 +140,7 @@ async function processMetaEntry(platform, entry) {
 /**
  * Handle Instagram direct message
  */
-async function handleInstagramMessage(event) {
+async function handleInstagramMessage(event: any) {
   const payload = {
     source: "meta-webhook",
     platform: "instagram",
@@ -251,7 +180,7 @@ async function handleInstagramMessage(event) {
 /**
  * Handle Instagram messages field update from entry.changes[].value
  */
-async function handleInstagramMessageFieldChange(value) {
+async function handleInstagramMessageFieldChange(value: any) {
   if (!value || !value.sender || !value.recipient || !value.message) {
     return;
   }
@@ -278,7 +207,7 @@ async function handleInstagramMessageFieldChange(value) {
 /**
  * Handle Instagram comment
  */
-async function handleInstagramComment(commentData) {
+async function handleInstagramComment(commentData: any) {
   const payload = {
     source: "meta-webhook",
     platform: "instagram",
@@ -316,7 +245,7 @@ async function handleInstagramComment(commentData) {
 /**
  * Handle Messenger message
  */
-async function handleMessengerMessage(event) {
+async function handleMessengerMessage(event: any) {
   const payload = {
     source: "meta-webhook",
     platform: "messenger",
@@ -356,7 +285,7 @@ async function handleMessengerMessage(event) {
 /**
  * Handle Messenger postback
  */
-async function handleMessengerPostback(event) {
+async function handleMessengerPostback(event: any) {
   const payload = {
     source: "meta-webhook",
     platform: "messenger",
@@ -393,11 +322,11 @@ async function handleMessengerPostback(event) {
 /**
  * Forward processed event to OpenClaw
  */
-async function forwardToOpenClaw(payload) {
+async function forwardToOpenClaw(payload: any) {
   try {
     console.log("Forwarding to OpenClaw:", config.openclaw.hookUrl);
 
-    const headers = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
@@ -406,13 +335,14 @@ async function forwardToOpenClaw(payload) {
       headers["Authorization"] = `Bearer ${config.openclaw.apiKey}`;
     }
 
-    const response = await axios.post(config.openclaw.hookUrl, payload, {
+    const response = await fetch(config.openclaw.hookUrl, {
+      method: "POST",
       headers,
-      timeout: 30000, // 30 second timeout
+      body: JSON.stringify(payload),
     });
 
     console.log("OpenClaw response:", response.status);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to forward to OpenClaw:", error.message);
     // Don't throw - we already responded 200 to Meta
   }
