@@ -154,7 +154,7 @@ async function processMetaEntry(
 
     for (const event of messaging) {
       if (event.message) {
-        const res = await handleInstagramMessage(vectorStore, event);
+        const res = await handleIncomingMessage(vectorStore, event);
         if (res) {
           responses.push(res);
         }
@@ -187,14 +187,16 @@ async function processMetaEntry(
 /**
  * Handle Instagram direct message
  */
-async function handleInstagramMessage(vectorStore: FaissStore, event: any) {
+async function handleIncomingMessage(vectorStore: FaissStore, event: any) {
   // Skip if the recipient is not the configured business account
   // i.e. only process messages sent to our business account, not from it
-  if (
-    (INSTAGRAM_BUSINESS_ACCOUNT_ID &&
-      event.recipient.id !== INSTAGRAM_BUSINESS_ACCOUNT_ID) ||
-    (FACEBOOK_BUSINESS_ACCOUNT_ID &&
-      event.recipient.id !== FACEBOOK_BUSINESS_ACCOUNT_ID)
+  if (!INSTAGRAM_BUSINESS_ACCOUNT_ID && !FACEBOOK_BUSINESS_ACCOUNT_ID) {
+    console.warn(
+      "No business account ID configured. Processing all messages, but it's recommended to set INSTAGRAM_BUSINESS_ACCOUNT_ID or FACEBOOK_BUSINESS_ACCOUNT_ID in .env to filter messages for your business account.",
+    );
+  } else if (
+    event.recipient.id !== INSTAGRAM_BUSINESS_ACCOUNT_ID ||
+    event.recipient.id !== FACEBOOK_BUSINESS_ACCOUNT_ID
   ) {
     console.log(
       `Skipping message for recipient ${event.recipient.id} not matching business account`,
