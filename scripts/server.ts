@@ -230,7 +230,7 @@ The POST request body should be a JSON object with the following structure:
     "id": "<INSTAGRAM_USER_ID>"
   },
   "message": {
-    "text": "<YOUR_RESPONSE_MESSAGE>"
+    "text": "<YOUR_RESPONSE_MESSAGE>" // Make your response around 50 words.
   }
 }
 `;
