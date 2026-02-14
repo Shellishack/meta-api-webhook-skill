@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { FaissStore } from "@langchain/community/vectorstores/faiss";
-import { OllamaEmbeddings } from "@langchain/ollama";
+import { OpenAIEmbeddings } from "@langchain/openai";
 import { DocxLoader } from "@langchain/community/document_loaders/fs/docx";
 import { glob } from "glob";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
@@ -14,6 +14,7 @@ const OPENCLAW_HOOK_URL = process.env.OPENCLAW_HOOK_URL || "";
 const SKILL_SERVER = process.env.SKILL_SERVER || "http://localhost:8080";
 const OPENCLAW_TOKEN = process.env.OPENCLAW_TOKEN || "";
 const META_BUSINESS_ACCOUNT_ID = process.env.META_BUSINESS_ACCOUNT_ID || "";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 
 function getVerifyTokens() {
   const tokens = new Set();
@@ -121,7 +122,7 @@ async function processMetaEntry(
 
     for (const event of messaging) {
       if (event.message) {
-        await handleMessengerMessage(event);
+        await handleMessengerMessage(vectorStore, event);
       }
     }
   }
@@ -338,8 +339,8 @@ async function loadDocumentsToFaiss(path: string, extension: string) {
   );
 
   const textSplitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 1000,
-    chunkOverlap: 200,
+    chunkSize: 800,
+    chunkOverlap: 250,
   });
 
   const allSplits = await textSplitter.splitDocuments(docs.flat());
@@ -349,9 +350,9 @@ async function loadDocumentsToFaiss(path: string, extension: string) {
 }
 
 async function initializeFaissStore() {
-  const embeddings = new OllamaEmbeddings({
-    model: "mxbai-embed-large",
-    baseUrl: "http://localhost:11434", // Default value
+  const embeddings = new OpenAIEmbeddings({
+    model: "text-embedding-3-large",
+    openAIApiKey: OPENAI_API_KEY,
   });
   const vectorStore = new FaissStore(embeddings, {});
 
