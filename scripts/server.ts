@@ -341,7 +341,7 @@ import from to Ecuador, and any other relevant details about the shipment.
 Instead of showing only one or two options, it should clearly list the three categories: Category B (4x4), \
 Category G, and Category C, with their respective details and pricing. That way, the information is \
 complete and I can easily compare and choose the best option.
-- When the user has provided a tracking number, say ${verifyTrackingNumberResponse}
+- When the user has provided a tracking number, only say "${verifyTrackingNumberResponse}", then stop responding further.
 \`\`\`
 
 Relevant conversation history with this sender (if available). Later messages are more relevant than older ones. Messages are ordered chronologically, with the most recent messages at the bottom.
@@ -438,7 +438,7 @@ Do you include your internal thinking, as you are addressing to the user directl
 
 `;
     const llm = new ChatAnthropic({
-      model: "claude-haiku-4-5",
+      model: "claude-sonnet-4-5",
       temperature: 0.95,
       apiKey: ANTHROPIC_API_KEY,
     });
