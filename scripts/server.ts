@@ -232,7 +232,7 @@ The POST request body should be a JSON object with the following structure:
     "id": "<INSTAGRAM_USER_ID>"
   },
   "message": {
-    "text": "<YOUR_RESPONSE_MESSAGE>" // Make your response around 50 words, it also must be in the same language that the user sends the message in.
+    "text": "<YOUR_RESPONSE_MESSAGE>" // Make your response around 50 words, it also must be in the same language that the user sends the message in. Always use UTF-8 encoding.
   }
 }
 `;
