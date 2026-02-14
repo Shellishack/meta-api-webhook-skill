@@ -12,7 +12,8 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 dotenv.config();
 
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "";
-const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "";
+const INSTAGRAM_ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN || "";
+const MESSENGER_ACCESS_TOKEN = process.env.MESSENGER_ACCESS_TOKEN || "";
 const META_BUSINESS_ACCOUNT_ID = process.env.META_BUSINESS_ACCOUNT_ID || "";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
@@ -27,7 +28,7 @@ function getVerifyTokens() {
   const tokens = new Set();
 
   tokens.add(VERIFY_TOKEN);
-  tokens.add(META_ACCESS_TOKEN);
+  tokens.add(INSTAGRAM_ACCESS_TOKEN);
 
   return tokens;
 }
@@ -106,10 +107,18 @@ async function handleMetaWebhookEvent(
       if (processedMessages && processedMessages.length > 0) {
         for (const message of processedMessages) {
           // Send response back to Instagram using Meta Graph API
+          const token =
+            platform === "instagram"
+              ? INSTAGRAM_ACCESS_TOKEN
+              : platform === "messenger"
+                ? MESSENGER_ACCESS_TOKEN
+                : "";
+
           await sendToGraphAPI(
             message.senderId,
             message.responseMessage,
             platform,
+            token,
           );
 
           if (platform === "instagram") {
@@ -384,6 +393,7 @@ async function sendToGraphAPI(
   recipient: string,
   message: string,
   platform: string,
+  token: string,
 ) {
   try {
     const payload = {
@@ -403,7 +413,7 @@ async function sendToGraphAPI(
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${META_ACCESS_TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           recipient: {
