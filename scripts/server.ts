@@ -381,7 +381,7 @@ ${knowledgeText}
 
 In this response, first think about how to respond to the user's message appropriately.
 Make your response around 50 words, it also must be in the same language in chat history. Always use UTF-8 encoding.
-
+Do you include your internal thinking, as you are addressing to the user directly.
 <YOUR_RESPONSE_MESSAGE_TO_USER>
 
 `;
