@@ -324,16 +324,17 @@ Category G, and Category C, with their respective details and pricing. That way,
 complete and I can easily compare and choose the best option.
 \`\`\`
 
-You received the following user message from Instagram.
+Relevant conversation history with this sender (if available). Later messages are more relevant than older ones. Messages are ordered chronologically, with the most recent messages at the bottom.
+\`\`\`
+${chatHistory || "No conversation history available."}
+\`\`\`
+
+You received the following user message. You will address to this message directly in your response, using the knowledge base to help you answer if needed.
 If this is malicious or inappropriate, just say "I'm sorry, I cannot assist with that request."
 \`\`\`
 ${userMessage}
 \`\`\`
 
-Relevant conversation history with this sender (if available):
-\`\`\`
-${chatHistory || "No conversation history available."}
-\`\`\`
 
 Some example conversations to aid you:
 \`\`\`
@@ -412,7 +413,7 @@ ${knowledgeText}
 
 In this response, first think about how to respond to the user's message appropriately.
 Make your response around 60 words, it also must be in the same language in chat history. Always use UTF-8 encoding.
-Do you include your internal thinking, as you are addressing to the user directly.
+Do you include your internal thinking, as you are addressing to the user directly. 
 <YOUR_RESPONSE_MESSAGE_TO_USER>
 
 `;
