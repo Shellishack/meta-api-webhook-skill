@@ -117,7 +117,7 @@ async function handleMetaWebhookEvent(
           await sendToGraphAPI(
             message.senderId,
             message.responseMessage,
-            platform,
+            platform === "instagram" ? "instagram" : "facebook",
             token,
           );
 
