@@ -189,6 +189,14 @@ async function processMetaEntry(
  */
 async function handleIncomingMessage(vectorStore: FaissStore, event: any) {
   // Skip if the recipient is not the configured business account
+  console.log(`Received message for recipient ${event.recipient.id}`);
+  console.log(
+    `Configured Instagram business account ID: ${INSTAGRAM_BUSINESS_ACCOUNT_ID}`,
+  );
+  console.log(
+    `Configured Facebook business account ID: ${FACEBOOK_BUSINESS_ACCOUNT_ID}`,
+  );
+
   // i.e. only process messages sent to our business account, not from it
   if (!INSTAGRAM_BUSINESS_ACCOUNT_ID && !FACEBOOK_BUSINESS_ACCOUNT_ID) {
     console.warn(
