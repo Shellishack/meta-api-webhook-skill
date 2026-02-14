@@ -183,7 +183,7 @@ async function generateLLMResponse(
   userMessage: string,
 ) {
   try {
-    const knowledge = await vectorStore.similaritySearch(userMessage, 5);
+    const knowledge = await vectorStore.similaritySearch(userMessage, 10);
     let knowledgeText = "";
     for (const doc of knowledge) {
       knowledgeText += doc.pageContent + "\n---\n";
@@ -295,7 +295,7 @@ async function loadDocumentsToFaiss(path: string, extension: string) {
   );
 
   const textSplitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 800,
+    chunkSize: 1000,
     chunkOverlap: 250,
   });
 
