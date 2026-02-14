@@ -14,7 +14,10 @@ dotenv.config();
 const VERIFY_TOKEN = process.env.META_VERIFY_TOKEN || "";
 const INSTAGRAM_ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN || "";
 const MESSENGER_ACCESS_TOKEN = process.env.MESSENGER_ACCESS_TOKEN || "";
-const META_BUSINESS_ACCOUNT_ID = process.env.META_BUSINESS_ACCOUNT_ID || "";
+const INSTAGRAM_BUSINESS_ACCOUNT_ID =
+  process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID || "";
+const FACEBOOK_BUSINESS_ACCOUNT_ID =
+  process.env.FACEBOOK_BUSINESS_ACCOUNT_ID || "";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
 
@@ -188,11 +191,13 @@ async function handleInstagramMessage(vectorStore: FaissStore, event: any) {
   // Skip if the recipient is not the configured business account
   // i.e. only process messages sent to our business account, not from it
   if (
-    META_BUSINESS_ACCOUNT_ID &&
-    event.recipient.id !== META_BUSINESS_ACCOUNT_ID
+    (INSTAGRAM_BUSINESS_ACCOUNT_ID &&
+      event.recipient.id !== INSTAGRAM_BUSINESS_ACCOUNT_ID) ||
+    (FACEBOOK_BUSINESS_ACCOUNT_ID &&
+      event.recipient.id !== FACEBOOK_BUSINESS_ACCOUNT_ID)
   ) {
     console.log(
-      `Skipping message for recipient ${event.recipient.id} not matching business account ${META_BUSINESS_ACCOUNT_ID}`,
+      `Skipping message for recipient ${event.recipient.id} not matching business account`,
     );
     return;
   }
