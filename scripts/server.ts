@@ -106,7 +106,11 @@ async function handleMetaWebhookEvent(
       if (processedMessages && processedMessages.length > 0) {
         for (const message of processedMessages) {
           // Send response back to Instagram using Meta Graph API
-          await sendToGraphAPI(message.senderId, message.responseMessage);
+          await sendToGraphAPI(
+            message.senderId,
+            message.responseMessage,
+            platform,
+          );
 
           if (platform === "instagram") {
             await saveConversationHistory(
@@ -376,7 +380,11 @@ Make your response around 50 words, it also must be in the same language in chat
   }
 }
 
-async function sendToGraphAPI(recipient: string, message: string) {
+async function sendToGraphAPI(
+  recipient: string,
+  message: string,
+  platform: string,
+) {
   try {
     const payload = {
       recipient: {
@@ -387,10 +395,10 @@ async function sendToGraphAPI(recipient: string, message: string) {
       },
     };
 
-    console.log("Sending payload to Instagram:", payload);
+    console.log(`Sending payload to ${platform}:`, payload);
     // Send response back to Instagram using Meta Graph API
     const response = await fetch(
-      `https://graph.instagram.com/v24.0/me/messages`,
+      `https://graph.${platform}.com/v24.0/me/messages`,
       {
         method: "POST",
         headers: {
@@ -410,13 +418,13 @@ async function sendToGraphAPI(recipient: string, message: string) {
 
     if (!response.ok) {
       throw new Error(
-        `Failed to send message to Instagram. Status: ${response.status}, Response: ${await response.text()}`,
+        `Failed to send message to ${platform}. Status: ${response.status}, Response: ${await response.text()}`,
       );
     }
 
-    console.log("Message sent to Instagram successfully");
+    console.log(`Message sent to ${platform} successfully`);
   } catch (error: any) {
-    console.error("Error sending message to Instagram:", error.message);
+    console.error(`Error sending message to ${platform}:`, error.message);
   }
 }
 
