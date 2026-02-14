@@ -292,7 +292,7 @@ async function generateLLMResponse(
   chatHistory: string,
 ) {
   try {
-    const knowledge = await vectorStore.similaritySearch(userMessage, 20);
+    const knowledge = await vectorStore.similaritySearch(userMessage, 15);
     let knowledgeText = "";
     for (const doc of knowledge) {
       knowledgeText += doc.pageContent + "\n---\n";
@@ -318,6 +318,10 @@ The email address is cotizar@riocargoexpress.com. They need to send us the \
 following information in order to receive a proper quotation: a detailed \
 description of the product, the quantity of units, the country they want to \
 import from to Ecuador, and any other relevant details about the shipment.
+- Show all possible options. For example, if user asks about Spain, the IA should provide all the available categories from Spain. \
+Instead of showing only one or two options, it should clearly list the three categories: Category B (4x4), \
+Category G, and Category C, with their respective details and pricing. That way, the information is \
+complete and I can easily compare and choose the best option.
 \`\`\`
 
 You received the following user message from Instagram.
@@ -370,7 +374,34 @@ Recibido, te agradezco de verdad
 Me:
 estamos a las ordenes
 
+Examples 3 – José Ruiz (Compra desde China)
+Customer:
+Hice un pedido de china a sus agencias (el envío se realizará después de las festividades de año nuevo chino)
+Son 4 prendas: 3 suéteras, y 1 camisa (adjunto imagen de las prendas) (alrededor de 2.5kg) a $118.70
+¿Tendría algún problema con la importación?
+Me:
+En Riocargo Express las compras desde China se manejan únicamente bajo la Categoría C
+¿Qué significa esto?
+Aplica para compras que:
+• Superan los $400 hasta $5.000 USD
+• Pesan más de 4 kg (máx. 100 kg)
+• O incluyen más de 4 unidades del mismo artículo (al por mayor)
+Por eso, todas las importaciones desde China deben cotizarse previamente, para calcular correctamente el flete, impuestos y manejo aduanero.
+Solicita tu cotización en:
+cotizar@riocargoexpress.com
 
+Example 4 – Scale Aviation
+Customer: 
+More information on how to import with you
+Agent: 
+Hello 👋
+Would you like to bring your purchases from the United States, Spain, or China to Ecuador easily, safely, and without intermediaries?
+The first step is to create your free international mailbox (it takes no more than 1 minute):
+Register here: https://courier.riocargoexpress.com/#/registro
+Or, if you prefer to do it from your mobile phone, download our app
+Riocargo Express App: https://www.riocargoexpress.com/app/
+Once registered, you will receive your mailbox number and you can start importing from any of our international warehouses.
+If you'd like, tell me which country you'd 
 \`\`\`
 
 
@@ -463,8 +494,8 @@ async function loadDocumentsToFaiss(path: string, extension: string) {
   );
 
   const textSplitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 1000,
-    chunkOverlap: 250,
+    chunkSize: 1200,
+    chunkOverlap: 350,
   });
 
   const allSplits = await textSplitter.splitDocuments(docs.flat());
