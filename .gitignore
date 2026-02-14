@@ -2,3 +2,4 @@ node_modules/
 .env
 scripts/.env
 scripts/docs/**
+scripts/history/*
