@@ -21,8 +21,11 @@ const FACEBOOK_BUSINESS_ACCOUNT_ID =
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
 
-const verifyTrackingNumberResponse =
+const verifyTrackingNumberResponseEn =
   "Thank you for providing the tracking number. We will check the status of your shipment and get back to you with an update as soon as possible.";
+
+const verifyTrackingNumberResponseEs =
+  "Gracias por proporcionar el número de seguimiento. Verificaremos el estado de su envío y nos pondremos en contacto con usted con una actualización lo antes posible.";
 
 type ProcessedMessage = {
   senderId: string;
@@ -207,7 +210,10 @@ async function handleInstagramMessage(vectorStore: FaissStore, event: any) {
   const senderId = event.sender?.id || "unknown";
   const chatHistory = await loadConversationHistory(senderId);
 
-  if (chatHistory.trimEnd().endsWith(verifyTrackingNumberResponse)) {
+  if (
+    chatHistory.trimEnd().endsWith(verifyTrackingNumberResponseEn) ||
+    chatHistory.trimEnd().endsWith(verifyTrackingNumberResponseEs)
+  ) {
     console.log(
       `Skipping message from ${senderId} because the last response was about tracking number verification.`,
     );
@@ -251,7 +257,7 @@ async function handleMessengerMessage(vectorStore: FaissStore, event: any) {
   const senderId = event.sender?.id || "unknown";
   const chatHistory = await loadConversationHistory(senderId);
 
-  if (chatHistory.trimEnd().endsWith(verifyTrackingNumberResponse)) {
+  if (chatHistory.trimEnd().endsWith(verifyTrackingNumberResponseEn)) {
     console.log(
       `Skipping message from ${senderId} because the last response was about tracking number verification.`,
     );
@@ -341,7 +347,7 @@ import from to Ecuador, and any other relevant details about the shipment.
 Instead of showing only one or two options, it should clearly list the three categories: Category B (4x4), \
 Category G, and Category C, with their respective details and pricing. That way, the information is \
 complete and I can easily compare and choose the best option.
-- When the user has provided a tracking number, only say "${verifyTrackingNumberResponse}", then stop responding further.
+- When the user has provided a tracking number, only say "${verifyTrackingNumberResponseEn}" if English, or "${verifyTrackingNumberResponseEs}" if Spanish, then stop responding further.
 \`\`\`
 
 Relevant conversation history with this sender (if available). Later messages are more relevant than older ones. Messages are ordered chronologically, with the most recent messages at the bottom.
