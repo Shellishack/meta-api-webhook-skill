@@ -292,7 +292,7 @@ async function generateLLMResponse(
   chatHistory: string,
 ) {
   try {
-    const knowledge = await vectorStore.similaritySearch(userMessage, 15);
+    const knowledge = await vectorStore.similaritySearch(userMessage, 20);
     let knowledgeText = "";
     for (const doc of knowledge) {
       knowledgeText += doc.pageContent + "\n---\n";
@@ -380,7 +380,7 @@ ${knowledgeText}
 \`\`\`
 
 In this response, first think about how to respond to the user's message appropriately.
-Make your response around 50 words, it also must be in the same language in chat history. Always use UTF-8 encoding.
+Make your response around 60 words, it also must be in the same language in chat history. Always use UTF-8 encoding.
 Do you include your internal thinking, as you are addressing to the user directly.
 <YOUR_RESPONSE_MESSAGE_TO_USER>
 
